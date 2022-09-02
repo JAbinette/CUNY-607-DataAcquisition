@@ -1,0 +1,65 @@
+---
+output:
+  html_document: default
+  pdf_document: default
+---
+## Overview: The Big Lie’s Long Shadow by Kaleigh Rogers
+  The article focused on the consequence of the claims that there was widespread voter fraud during the 2020 presidential election, which the article refers to as The Big Lie. Regardless of the truthfulness of such claims, voters have become increasingly concerned about the integrity of elections. This distrust has been used by politicians to introduce voter restriction legislation that is supposedly geared towards improving election integrity, but that is actually vote suppression given the voter fraud claims are unsubstantiated. Most concerning is the legislation that increases the risk of election subversion where one party can overturn election results.
+  
+Article Link: https://fivethirtyeight.com/features/the-big-lie-voting-laws/
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+
+```
+```{r}
+library(tidyverse)
+```
+## Import Data:
+```{r}
+url = 'https://raw.githubusercontent.com/JAbinette/CUNY-607-DataAcquisition/main/The%20Big%20Lies%20Long%20Shadow.csv'
+BL <- read.csv(url, header = TRUE, sep = ",", stringsAsFactors = FALSE)
+str(BL)
+```
+## Transform Data:
+```{r}
+## Rename column Introducing Party
+names(BL)[names(BL)=="Introducing.Party"] <- "Introduced_By"
+
+## Rename abbreviated values
+BL$Introduced_By[BL$Introduced_By == 'D'] <-  'Democrats'
+BL$Introduced_By[BL$Introduced_By == 'R'] <-  'Republicans'
+BL$Introduced_By[BL$Introduced_By == 'N/A'] <-  'Not Available'
+
+## Add variable indicating if the Bill shifts authority from officials to partisan bodies 
+#(Categorized as partisan election role). 
+#Each bill is a case and can have multiple categories listed as 1 value separated by commas.
+BL$Partisan_Election_Bill <- ifelse(grepl("partisan election roles",BL$Category),1,0)
+
+## Add variable indicating if the Bill was passed into Law 
+#(Status of Signed into law or Veto-overridden into law)
+BL$Became_Law <- ifelse(grepl("into law",BL$Status),1,0)
+
+## Add variable indicating if the Bill was renamed as these are already included as another case with the new Bill ID
+#(Status starts with Became) 
+BL$Renamed <- ifelse(grepl("Became",BL$Status),1,0)
+str(BL)
+```
+## Subset Data:
+```{r}
+## Create subset including on Partisan Election Bills
+#Removes cases where bill was renamed as the new bill name is already included as another case
+(BL_Law <- subset (BL, Partisan_Election_Bill==1 & Renamed ==0, select = c(State, Bill, Introduced_By, Partisan_Election_Bill, Became_Law) ))
+
+```
+## Summarize Data:
+```{r}
+## Summarize by State, the count of partisan election bills introduced and passed into law
+BL_State <- aggregate(BL_Law[4:5], list(BL_Law$State), FUN = sum)
+arrange(BL_State, desc(Became_Law))
+
+```
+
+## Conclusions:
+The article expressed that most concerning is the legislation that shifts authority from officials to partisan bodies as it increases the risk of election subversion. On that note, I isolated these bills by State to find that 5 States (Arizona, Georgia, Kansas, Montana, &  N.Carolina) of 9 passed such bills into law in 2021, of which all were introduced by Republicans. I agree with the author that this aspect is fairly concerning, especially considering several of these states were Battleground states in the 2020 Presidential Election. This work could be extended by diving deeper into the other voter restriction legislation passed by these 5 states, adding bills from 2022, and predicting how the restrictions will affect each party.
