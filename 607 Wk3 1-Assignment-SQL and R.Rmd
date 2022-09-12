@@ -1,0 +1,47 @@
+## Overview: SQL and R Assignment - Store survey data in SQL database and then load into an R dataframe
+Surveyed 7 friends to rate the following 6 recent movies on a scale of 1 (Hated it) to 5 (Absolutely Loved it):
+1) Top Gun - Maverick
+2) Dr. Strange Multiverse of Madness
+3) Thor: Love & Thunder
+4) Lightyear
+5) Bullet Train
+6) Jurassic World: Dominion
+
+The results (observations) were inserted into a MySQL database table D607_Wk3_Survey created with the following SQL Script
+## Insert survey observations into MySQL database
+CREATE TABLE D607_Wk3_Survey
+(
+ participant int not null,
+  top_gun int NULL,
+  dr_strange int NULL,
+  thor  int NULL,
+  lightyear  int NULL,
+  bullet_train  int NULL,
+  jurassic_world  int NULL
+);
+
+INSERT INTO D607_Wk3_Survey VALUES (1,4,4,3,3,5,3);
+INSERT INTO D607_Wk3_Survey VALUES (2,3,null,null,3,4,null);
+INSERT INTO D607_Wk3_Survey VALUES (3,null,5,4,4,5,3);
+INSERT INTO D607_Wk3_Survey VALUES (4,null,4,3,null,null,null);
+INSERT INTO D607_Wk3_Survey VALUES (5,null,null,null,null,5,null);
+INSERT INTO D607_Wk3_Survey VALUES (6,null,4,null,4,null,null);
+INSERT INTO D607_Wk3_Survey VALUES (7,null,null,4,3,null,null);
+
+```{r}
+library(RMySQL)
+```
+## Import Data:
+```{r}
+mydb = dbConnect(RMySQL::MySQL(), dbname='tb', user='root', password='password', host='localhost',port=3306)
+
+# Save sql table into dataframe called movies
+movies <- dbGetQuery(mydb, "select * from D607_Wk3_Survey")
+```
+## Null Values:
+```{r}
+
+str(movies)
+```
+## Conclusion:
+Selected 6 recent movies and surveyed 7 participants. If the participant did not watch the movie as of 9/11 then value was left null. Created a MySQL database with table D607_Wk3_Survey, inserted data points and then imported into R. Checked how null values were treated and values are now NA.
