@@ -1,0 +1,106 @@
+---
+title: "607 Wk 4 Assignment"
+output: html_document
+date: "2022-09-18"
+---
+## Overview: Data 607 Week 4 Assignment covers R Character Manipulation
+
+## 1) Identify Data and Statistics Majors
+#Using the 173 majors listed in fivethirtyeight.com’s College Majors dataset [https://fivethirtyeight.com/features/the-economic-guide-to-picking-a-college-major/], provide code that identifies the majors that contain either "DATA" or "STATISTICS"
+# Import Data:
+```{r}
+library(tidyverse)
+
+url = 'https://raw.githubusercontent.com/fivethirtyeight/data/2d2ff3e9457549d51f8e571c52099bfe9b2017ad/college-majors/majors-list.csv'
+collmajors <- read.csv(url, header = TRUE, sep = ",", stringsAsFactors = FALSE)
+stat_data <- grep(pattern = 'STATISTICS|DATA', collmajors$Major, value = TRUE, ignore.case = TRUE)
+stat_data
+```
+# Alternatively, could also identify values by: 
+```{r}
+majors <- as.character(collmajors$Major)
+str_extract(majors,"STATISTICS|DATA")
+```
+# List the majors based on results of str_extract
+```{r}
+print(majors[44])
+print(majors[52])
+print(majors[59])
+```
+
+## 2) Write code that transforms the data below:
+[1] "bell pepper"  "bilberry"     "blackberry"   "blood orange"
+[5] "blueberry"    "cantaloupe"   "chili pepper" "cloudberry"  
+[9] "elderberry"   "lime"         "lychee"       "mulberry"    
+[13] "olive"        "salal berry"
+#Into a format like this:
+c("bell pepper", "bilberry", "blackberry", "blood orange", "blueberry", "cantaloupe", "chili pepper", "cloudberry", "elderberry", "lime", "lychee", "mulberry", "olive", "salal berry")
+```{r}
+##Save text input as fruits
+fruits <- '
+[1] "bell pepper"  "bilberry"     "blackberry"   "blood orange"
+[5] "blueberry"    "cantaloupe"   "chili pepper" "cloudberry"  
+[9] "elderberry"   "lime"         "lychee"       "mulberry"    
+[13] "olive"        "salal berry"
+'
+```
+
+```{r}
+fruits_2 <- str_extract_all(fruits, "\\w[a-z]+\\s?[a-z]+\\w")
+dput(fruits_2)
+```
+```{r}
+# Fruits_2 is classed as a list which is why it's showing up in the output so need to unlist
+fruits_3 <- unlist(fruits_2)
+dput(fruits_3)
+```
+
+## 3) Describe, in words, what these expressions will match:
+```{r}
+# Set up Example to be used to show matches for each expression
+tst <- c("aaa", "abba", "abab", "abaca","abcFILLERcba")
+```
+
+(.)\1\1 - Any character repeated 3 times consecutively. For testing example, will need to input in quotes and add additional backslashes
+```{r}
+str_extract(tst,"(.)\\1\\1")
+```
+"(.)(.)\\2\\1" - A pair of characters followed by the same pair of characters in reversed order
+```{r}
+str_extract(tst,"(.)(.)\\2\\1")
+```
+(..)\1 - Any two characters repeated.  For testing example, will need to input in quotes and add additional backslash
+```{r}
+str_extract(tst,"(..)\\1")
+```
+"(.).\\1.\\1" - A character followed by any character, the original character, any other character, the original character again.
+```{r}
+str_extract(tst,"(.).\\1.\\1")
+```
+"(.)(.)(.).*\\3\\2\\1" -Three characters followed by zero or more characters of any kind followed by the same three characters but in reverse order
+```{r}
+str_extract(tst,"(.)(.)(.).*\\3\\2\\1")
+```
+
+## 4) Construct regular expressions to match words that:
+```{r}
+# Set up Example to be used to show matches for each expression
+tst4 <- c("alexa", "church", "eleven")
+```
+Start and end with the same character
+#    "^(.).*\\1$"
+```{r}
+str_extract(tst4,"^(.).*\\1$")
+```
+Contain a repeated pair of letters (e.g. "church" contains "ch" repeated twice.) 
+#   "([a-zA-Z][a-zA-Z]).*\\1"
+```{r}
+str_extract(tst4,"([a-zA-Z][a-zA-Z]).*\\1")
+```
+Contain one letter repeated in at least three places (e.g. "eleven" contains three "e"s.)
+#   "([a-zA-Z]).*\\1.*\\1.*"
+```{r}
+str_extract(tst4,"([a-zA-Z]).*\\1.*\\1.*")
+
+```
+
