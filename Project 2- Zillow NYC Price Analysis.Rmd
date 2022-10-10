@@ -1,0 +1,53 @@
+---
+title: "607 Wk 7 Project 2 - New York City Typical Home Vale Analysis"
+author: "Jennifer Abinette"
+output: html_document
+date: "2022-09-30"
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(tidyverse)
+library(dplyr)
+```
+## 1) Download dataset from https://www.zillow.com/research/data/
+Home Values Section: 
+Data Type = ZHVI Single-Family Homes Time Series;
+Geography = Zip Code
+
+## 2) Remove records where State is not NY from the CSV file as file is too large for Github and analysis is on NYC
+
+## 3) Load CSV file saved in Github
+```{r}
+url = 'https://raw.githubusercontent.com/JAbinette/CUNY-607-DataAcquisition/main/Project%202%20-Zillow%20NY%20Only.csv'
+d.load <- read.csv(url, header = TRUE, sep = ",", stringsAsFactors = FALSE)
+str(d.load)
+```
+## 4) Subset data to include only NYC records and Remove extraneous columns
+```{r}
+nyc <- subset(d.load, City=='New York', select = c(City, X8.31.2021, X8.31.2022) )
+
+head(nyc)
+```
+## 5) Transform Data
+```{r}
+# Rename Columns
+names(nyc) <- c("City", "August_2021", "August_2022")
+
+# Create variables finding Average for all of New York City 
+nyc_1 <- nyc  %>% 
+  group_by(City) %>%
+  mutate (Avg_2021 = mean(August_2021, na.rm = TRUE)) %>%
+  mutate (Avg_2022 = mean(August_2022, na.rm = TRUE)) 
+
+# Create new data frame removing extraneous columns and duplicate rows
+nyc_2 <- as.data.frame( distinct( subset (nyc_1, select = c (City, Avg_2021, Avg_2022) ) ) )
+head(nyc_2)
+```
+## 6) Analyze Percent Change between 2021 and 2022
+```{r}
+# Add Percent Growth Variable
+nyc_2$Growth = 100 * ( (nyc_2$Avg_2022 - nyc_2$Avg_2021) / nyc_2$Avg_2021 )
+print(nyc_2)
+```
+## Conclusion: The analysis indicates that there was a 7% growth in typical home value for New York, NY where the average increased from $1,317,949 in August 2021 to $1,409,759 in August 2022.

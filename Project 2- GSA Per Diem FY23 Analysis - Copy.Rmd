@@ -1,0 +1,59 @@
+---
+title: "607 Wk 7 Project 2 - GSA Per Diem Rate Analysis"
+author: "Jennifer Abinette"
+output: html_document
+date: "2022-09-30"
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(tidyverse)
+library(dplyr)
+```
+### Introduction: This analysis uses the per diem rates published yearly by the General Services Administration to analyze What counties in the United States have the highest Lodging and Meal Per Diem Rates in Fiscal Year 2023.
+
+## 1) Download FY 23 Per Diem Rates dataset from https://www.gsa.gov/travel/plan-book/per-diem-rates/per-diem-files
+
+## 2) Save a copy as CSV file
+
+## 3) Load CSV file saved in Github
+```{r}
+url = 'https://raw.githubusercontent.com/JAbinette/CUNY-607-DataAcquisition/main/Project%202%20-GSA%20Per%20Diems%20FY2023.csv'
+d.load <- read.csv(url, header = TRUE, sep = ",", skip=1, stringsAsFactors = FALSE)
+
+head(d.load)
+```
+## 4) Tidy and Transform Data for Analyses
+*Note: The first data record is the Standard per diem rate that applies to all counties not otherwise listed in this dataset. Though the Destination field usually includes Cities, those rates are applicable to the entire County rather than City.
+```{r}
+# Remove 1st Record for Standard Per Diem Rate as will not be used in analysis and Destination as Rates are by County not City
+pdiem_1 <- subset(d.load[-1,], select = c(STATE, COUNTY.LOCATION.DEFINED, SEASON.BEGIN, SEASON.END, FY23.Lodging.Rate, FY23.M.IE) )
+
+# Rename Columns
+names(pdiem_1) <- c("STATE", "COUNTY", "START", "END", "LODGING", "MEALS")
+
+pdiem_1$COUNTY_STATE <- paste(pdiem_1$COUNTY," (", pdiem_1$STATE, ")")
+# Adjust Lodging and Meals to integer columns
+pdiem_1$LODGING <- as.integer(  substr(  pdiem_1$LODGING, 3, nchar(pdiem_1$LODGING)  )  )
+pdiem_1$MEALS <- as.integer(  substr(  pdiem_1$MEALS, 3, nchar(pdiem_1$MEALS)  )  )
+ 
+head(pdiem_1)
+```
+## 5) Identify Top 10 Highest Lodging Per Diems
+```{r}
+top10_lodging <- pdiem_1 %>%
+  group_by (COUNTY_STATE)
+  top_n (pdiem_1, n=10, wt=LODGING) %>%
+  arrange ( desc(LODGING) ) %>%
+  select (COUNTY_STATE, LODGING)
+```
+## 6) Identify Top 10 Highest Meal Per Diems
+```{r}
+top10_meal <- pdiem_1 %>%
+  group_by (COUNTY_STATE)
+  top_n (pdiem_1, n=10, wt=MEALS) %>%
+  arrange ( desc(MEALS) ) %>%
+  select (COUNTY_STATE, MEALS) %>%
+  distinct()
+```
+## Conclusion: These analyses show that Eagle County, Colorado can boast having the highest lodging per diem rate for FY 2023 at $485.  Contrary to my expectations, there were no counties in New York, but Colorado and Massachusetts were tied at having 3 of their counties in the Top 10 Lodging Rates. As for Top 10 Meal Per Diems, the maximum rate of $79 has 34 locations at this rate hence why the Top 10 table became a list of locations all having the same rate.
