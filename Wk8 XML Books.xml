@@ -1,0 +1,9 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<favorite>
+  <book pgs="607" lang="eng" series="yes">
+    <title>Harry Potter and the Deathly Hallows</title>
+    <author>J.K. Rowling<author/>
+    <published>07-21-2007</published>
+    <protagonist>Harry Potter</protagonist>
+  </book>
+</favorite>
