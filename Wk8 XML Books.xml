@@ -1,0 +1,21 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<favorite>
+  <book pgs="607" lang="eng" series="yes">
+    <title>Harry Potter and the Deathly Hallows</title>
+    <author>J.K. Rowling</author>
+    <published>07-21-2007</published>
+    <protagonist>Harry Potter</protagonist>
+  </book>
+  <book pgs="704" lang="eng" series="yes">
+    <title>Cursor's Fury</title>
+    <author>Jim Butcher</author>
+    <published>12-05-2006</published>
+    <protagonist>Gaius Octavian</protagonist>
+  </book>
+  <book pgs="288" lang="eng" series="no">
+    <title>Good Omens</title>
+    <author>Neil Gaiman, Terry Pratchett</author>
+    <published>05-10-1990</published>
+    <protagonist>Aziraphale, Crowley</protagonist>
+  </book>
+</favorite>
