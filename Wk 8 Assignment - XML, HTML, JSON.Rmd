@@ -1,0 +1,52 @@
+---
+title: "CUNY 607 Data Acquisition"
+author: "Jennifer Abinette"
+output: html_document
+date: "2022-10-16"
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Week 8 Assignment – Working with XML and JSON in R
+Pick three of your favorite books on one of your favorite subjects. At least one of the books should have more than one author. For each book, include the title, authors, and two or three other attributes that you find interesting. 
+
+Take the information that you’ve selected about these three books, and separately create three files which store the book’s information in HTML (using an html table), XML, and JSON formats (e.g. “books.html”, “books.xml”, and “books.json”). To help you better understand the different file structures, I’d prefer that you create each of these files “by hand” unless you’re already very comfortable with the file formats.
+
+Write R code, using your packages of choice, to load the information from each of the three sources into separate R data frames. Are the three data frames identical?
+Your deliverable is the three source files and the R code. If you can, package your assignment solution up into an .Rmd file and publish to rpubs.com. [This will also require finding a way to make your three text files accessible from the web].
+
+## Load Libraries:
+```{r}
+library(XML)
+library(xml2)
+library(rvest)
+library(jsonlite)
+library(tidyr)
+```
+
+## XML Data Frame:
+```{r xml}
+x.read <- read_xml('https://raw.githubusercontent.com/JAbinette/CUNY-607-DataAcquisition/main/Wk8%20XML%20Books.xml')
+x.df <- x.read %>%
+  xmlParse() %>%
+  xmlToDataFrame()
+x.df
+```
+## HTML Data Frame:
+
+```{r html}
+h.read <- read_html('https://raw.githubusercontent.com/JAbinette/CUNY-607-DataAcquisition/main/Wk8%20HTML%20Books.html')
+h.df <- as.data.frame(  html_table( h.read, header = TRUE)  )
+h.df
+```
+## JSON Data Frame:
+```{r json}
+j.read <-fromJSON('https://raw.githubusercontent.com/JAbinette/CUNY-607-DataAcquisition/main/Wk8%20JSON%20Books.json')
+j.df <- as.data.frame(j.read)
+j.df
+```
+## Are the 3 data frames identical?
+
+My intention was to load and convert the files to data frames, in a minimum number of steps.  We can see that none of the data frames are identical to each other including different variable names, order, count and even data types (e.g., HTML data frame has pages as integer while JSON left the field as character).  XML and HTML are the most similar to each other, but the largest difference is that the XML data frame is missing the variables of the attributes (i.e., pages, language, series).  To create a similar data frame from the XML file will require more steps than outlined above, but it is possible.
