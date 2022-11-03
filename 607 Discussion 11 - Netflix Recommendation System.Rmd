@@ -1,0 +1,45 @@
+---
+title: "607 Discussion 11 - Recommendation Engine"
+author: "Jennifer Abinette"
+output: html_document
+date: "2022-11-03"
+---
+
+## Recommendation System: NETFLIX
+
+Your task is to analyze an existing recommender system that you find interesting.  
+
+You should:
+Perform a Scenario Design analysis as described below.  Consider whether it makes sense for your selected recommender system to perform scenario design twice, once for the organization (e.g. Amazon.com) and once for the organization's customers. Attempt to reverse engineer what you can about the site, from the site interface and any available information that you can find on the Internet or elsewhere. Include specific recommendations about how to improve the site's recommendation capabilities going forward. Create your report using an R Markdown file, and create a discussion thread with a link to the GitHub repo where your Markdown file notebook resides.  You are not expected to need to write code for this discussion assignment.
+
+Background:
+
+Netflix is a streaming services allowing users to watch select TV shows and movies through a paid subscription. Users can set up separate profiles and provide a rating for specific content if they liked, loved or disliked it.  Netflix uses a recommendation system to populate a user's home page with content specific to them.
+
+#### Who are your target users?
+
+Customers: People that are looking for entertainment.
+
+Organization: Everyone.
+
+
+#### What are their key goals?
+
+Customer: Successfully find a TV show or movie for entertainment and that the content is suited to their tastes and enjoyable.
+
+Organization: Provide user satisfaction, accurate recommendations, and to get new and upgraded subscriptions.
+
+#### How can you help them accomplish those goals
+
+Customer: Creating and using a separate profile per user and rating the content recommendations and anything watched to help the recommendation engine accurately predict content on a user's homepage.
+
+Organization: Make accurate recommendations to increase user satisfaction and advertise the benefits of upgrading subscriptions.  Also, as Netflix does not have every TV show and movie available, they also want to ensure they have enough varied content to satisfy all types of users.
+
+#### Reverse Engineering
+
+Netflix uses a hybrid recommendation system that combines collaborative and content-based filtering.  The system takes into account the watching and searching habits of similar users and also content that shares characteristics with content that the user has rated highly.
+
+#### Suggestions for possible improvement
+
+Netflix is continuously working to improve their recommendation system, which is described in much more detail at https://research.netflix.com/research-area/recommendations
+As a current user of Netflix, I can definitely attest that I can see the continuous improvement of my recommendations.  My thought for improvement would be a quick and easy way for a user to remove content from their homepage and perhaps adding the ability for the user to indicate what type of entertainment they are most interested in at a given time.  For example, I might feel like watching a comedy or romance, but tomorrow it might be documentaries. It'd be great to be able to indicate what I'm in the mood for so the recommendations will adjust accordingly.
