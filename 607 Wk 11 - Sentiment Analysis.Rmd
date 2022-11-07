@@ -1,0 +1,311 @@
+---
+title: "607 Wk 11 - Sentiment Analysis"
+author: "Jennifer Abinette"
+output: html_document
+date: "2022-11-03"
+---
+# Background
+
+In this assignment, you should start by getting the primary example code from chapter 2 working in an R Markdown document.  You should provide a citation to this base code. 
+
+Text Mining with R: A Tidy Approach, Julia Silge and David Robinson. O’Reilly, 2017. 
+
+We will also be working with the following lexicons:
+* `AFINN` from [Finn Årup Nielsen](http://www2.imm.dtu.dk/pubdb/views/publication_details.php?id=6010),
+* `bing` from [Bing Liu and collaborators](https://www.cs.uic.edu/~liub/FBS/sentiment-analysis.html), and
+* `nrc` from [Saif Mohammad and Peter Turney](http://saifmohammad.com/WebPages/NRC-Emotion-Lexicon.htm)
+nrc dataset was published in Saif M. Mohammad and Peter Turney. (2013), ``Crowdsourcing a Word-Emotion Association Lexicon.'' Computational Intelligence, 29(3): 436-465.
+
+You’re then asked to extend the code in two ways:
+•	Work with a different corpus of your choosing, and
+•	Incorporate at least one additional sentiment lexicon (possibly from another R package that you’ve found through research).
+As usual, please submit links to both an .Rmd file posted in your GitHub repository and to your code on rpubs.com.  You may work on a small team on this assignment.
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+
+library(tidytext)
+library(janeaustenr)
+library(dplyr)
+library(stringr)
+tidy_books <- austen_books() %>%
+  group_by(book) %>%
+  mutate(
+    linenumber = row_number(),
+    chapter = cumsum(str_detect(text, 
+                                regex("^chapter [\\divxlc]", 
+                                      ignore_case = TRUE)))) 
+```
+
+## Chapter 2 Sentiment Analysis of Jane Austen works
+
+```{r}
+tidy_books <- austen_books() %>%
+  group_by(book) %>%
+  mutate(
+    linenumber = row_number(),
+    chapter = cumsum(str_detect(text, 
+                                regex("^chapter [\\divxlc]", 
+                                      ignore_case = TRUE)))) %>%
+  ungroup() %>%
+  unnest_tokens(word, text)
+
+nrc_joy <- get_sentiments("nrc") %>% 
+  filter(sentiment == "joy")
+
+tidy_books %>%
+  filter(book == "Emma") %>%
+  inner_join(nrc_joy) %>%
+  count(word, sort = TRUE)
+```
+```{r}
+library(tidyr)
+
+jane_austen_sentiment <- tidy_books %>%
+  inner_join(get_sentiments("bing")) %>%
+  count(book, index = linenumber %/% 80, sentiment) %>%
+  pivot_wider(names_from = sentiment, values_from = n, values_fill = 0) %>% 
+  mutate(sentiment = positive - negative)
+  
+library(ggplot2)
+
+ggplot(jane_austen_sentiment, aes(index, sentiment, fill = book)) +
+  geom_col(show.legend = FALSE) +
+  facet_wrap(~book, ncol = 2, scales = "free_x")
+
+```
+
+```{r}
+pride_prejudice <- tidy_books %>% 
+  filter(book == "Pride & Prejudice")
+
+pride_prejudice
+```
+
+```{r}
+afinn <- pride_prejudice %>% 
+  inner_join(get_sentiments("afinn")) %>% 
+  group_by(index = linenumber %/% 80) %>% 
+  summarise(sentiment = sum(value)) %>% 
+  mutate(method = "AFINN")
+
+bing_and_nrc <- bind_rows(
+  pride_prejudice %>% 
+    inner_join(get_sentiments("bing")) %>%
+    mutate(method = "Bing et al."),
+  pride_prejudice %>% 
+    inner_join(get_sentiments("nrc") %>% 
+                 filter(sentiment %in% c("positive", 
+                                         "negative"))
+    ) %>%
+    mutate(method = "NRC")) %>%
+  count(method, index = linenumber %/% 80, sentiment) %>%
+  pivot_wider(names_from = sentiment,
+              values_from = n,
+              values_fill = 0) %>% 
+  mutate(sentiment = positive - negative)
+
+bind_rows(afinn, 
+          bing_and_nrc) %>%
+  ggplot(aes(index, sentiment, fill = method)) +
+  geom_col(show.legend = FALSE) +
+  facet_wrap(~method, ncol = 1, scales = "free_y")
+```
+```{r}
+bing_word_counts <- tidy_books %>%
+  inner_join(get_sentiments("bing")) %>%
+  count(word, sentiment, sort = TRUE) %>%
+  ungroup()
+
+bing_word_counts
+```
+  
+```{r}
+bing_word_counts %>%
+  group_by(sentiment) %>%
+  slice_max(n, n = 10) %>% 
+  ungroup() %>%
+  mutate(word = reorder(word, n)) %>%
+  ggplot(aes(n, word, fill = sentiment)) +
+  geom_col(show.legend = FALSE) +
+  facet_wrap(~sentiment, scales = "free_y") +
+  labs(x = "Contribution to sentiment",
+       y = NULL)
+```
+
+```{r}
+custom_stop_words <- bind_rows(tibble(word = c("miss"),  
+                                      lexicon = c("custom")), 
+                               stop_words)
+
+custom_stop_words
+```
+
+```{r}
+library(wordcloud)
+
+tidy_books %>%
+  anti_join(stop_words) %>%
+  count(word) %>%
+  with(wordcloud(word, n, max.words = 100))
+```
+```{r}
+library(reshape2)
+
+tidy_books %>%
+  inner_join(get_sentiments("bing")) %>%
+  count(word, sentiment, sort = TRUE) %>%
+  acast(word ~ sentiment, value.var = "n", fill = 0) %>%
+  comparison.cloud(colors = c("gray20", "gray80"),
+                   max.words = 100)
+```
+
+## Sentiment Analysis of Right Troll Internet Research Agency (IRA) tweets
+
+# Data
+We will be working with the 1st file of russian-troll-tweets from fivethirtyeight.com titled 'IRAhandle_tweets_1.csv'. The full dataset includes 3 million Russian troll tweets from accounts associated with the Internet Research Agency based in St. Petersburg, Russia that "campaigned to sow disinformation and discord into American politics via social media."
+
+Original Data: https://github.com/fivethirtyeight/russian-troll-tweets
+Featured Article: https://fivethirtyeight.com/features/why-were-sharing-3-million-russian-troll-tweets/
+
+Original data has been adjusted by:
+a) Convert the csv file to xlsx and save on my directory.
+b) File be too large so made the following adjustments:
+-Removed tweets not in RightTroll account category, language was not English, and publish_date was before 2016 election was called on November 9
+-Removed all columns except author, publish_date and content
+c) Saved in directory to load into R 
+# Find adjusted dataset on Github at https://github.com/JAbinette/CUNY-607-DataAcquisition/blob/main/Wk%2011%20-%20IRAhandle_tweets_1%20-Filtered%20to%20RightTroll%20ONLY.xlsx
+
+```{r}
+library(readxl)
+# Set path to excel spreadsheet
+path = "Wk 11 - IRAhandle_tweets_1 -Filtered to RightTroll ONLY.xlsx"
+IRAtweet1 <- read_excel(path)
+as_tibble(IRAtweet1)
+```
+# Analysis Based on Unigrams - afinn, bing & nrc
+
+```{r}
+# Tidy dataset so the tweet content is one word per line
+IRAtweet2 <- IRAtweet1 %>%
+    group_by(author) %>%
+  mutate(
+    linenumber = row_number()) %>%
+  ungroup() %>%
+  unnest_tokens(word, content)
+
+as_tibble(IRAtweet2)
+```
+# Conduct the sentiment analyses by word and plot results together
+```{r}
+# Conduct AFINN sentiment analysis
+afinnIRA <- IRAtweet2 %>% 
+  inner_join(get_sentiments("afinn")) %>% 
+  group_by(index = linenumber %/% 80) %>% 
+  summarise(sentiment = sum(value)) %>% 
+  mutate(method = "AFINN")
+
+# BING and NRC
+bingIR_nrcIRA <- bind_rows(
+  IRAtweet2 %>% 
+    inner_join(get_sentiments("bing")) %>%
+    mutate(method = "Bing et al."),
+  IRAtweet2 %>% 
+    inner_join(get_sentiments("nrc") %>% 
+                 filter(sentiment %in% c("positive", 
+                                         "negative"))
+    ) %>%
+    mutate(method = "NRC")) %>%
+  count(method, index = linenumber %/% 80, sentiment) %>%
+  pivot_wider(names_from = sentiment,
+              values_from = n,
+              values_fill = 0) %>% 
+  mutate(sentiment = positive - negative)
+
+bind_rows(afinnIRA, 
+          bingIR_nrcIRA) %>%
+  ggplot(aes(index, sentiment, fill = method)) +
+  geom_col(show.legend = FALSE) +
+  facet_wrap(~method, ncol = 1, scales = "free_y")
+```
+# We can see from the graphs above that the sentiment analyses using AFINN and Bing lexicons found that in general the tweets were negative with only few instances of positive instances whereas nrc lexicon fluctuated between the two.  
+
+# Let's take a look the words most frequently used by sentiment from the bing lexicon 
+```{r}
+bingIRA_counts <- IRAtweet2 %>%
+  inner_join(get_sentiments("bing")) %>%
+  count(word, sentiment, sort = TRUE) %>%
+  ungroup()
+
+as_tibble(bingIRA_counts)
+```
+# We can see that our sentiment analyses are highly affected by the word trump, which is used more than 2.5 times as much as the next highest word breaking. This has definitely affected our analyses as a Right Troll account publishing tweets from 2015 to November 9, 2016 is very likely to be referring to former President Donald Trump.  If we did exclude trump from the lexicons, we would see the analyses become even more negative.
+
+# Show top 10 Positive and Negative words from Bing Sentiment Analysis
+```{r}
+bingIRA_counts %>%
+  group_by(sentiment) %>%
+  slice_max(n, n = 10) %>% 
+  ungroup() %>%
+  mutate(word = reorder(word, n)) %>%
+  ggplot(aes(n, word, fill = sentiment)) +
+  geom_col(show.legend = FALSE) +
+  facet_wrap(~sentiment, scales = "free_y") +
+  labs(x = "Contribution to sentiment",
+       y = NULL)
+```
+
+# Build Wordcloud
+```{r}
+IRAtweet2 %>%
+  count(word) %>%
+  with(wordcloud(word, n, max.words = 100))
+```
+
+## Sentiment Analysis by Tweet
+
+# Using the SentimentAnalysis package, we will use the psychological Harvard-IV dictionary, which is a general purpose dictionary to analyze whether a tweet is positive or negative. Unfortunately, R is not able to process all 113K tweets at once so we will need to split it.
+SentimentAnalysis Vignette: https://cran.r-project.org/web/packages/SentimentAnalysis/vignettes/SentimentAnalysis.html#built-in-dictionaries
+```{r}
+# Load dplyr
+library(dplyr)
+
+# Group by count using dplyr
+agg_tbl <- IRAtweet1 %>% 
+  group_by(author) %>% 
+  summarise(total_count=n(),
+            .groups = 'drop') %>%
+  arrange(desc(total_count))
+agg_tbl
+```
+# Split data into 3 subsets for the Sentiment Analysis
+```{r}
+sub1 <- subset(IRAtweet1, author == "ARM_2_ALAN")
+sub2 <- subset(IRAtweet1, author == "AMELIEBALDWIN")
+sub3 <- subset(IRAtweet1, author != "ARM_2_ALAN" & author != "AMELIEBALDWIN")
+```
+
+# Conduct Sentiment Analysis of each tweet
+```{r}
+library(SentimentAnalysis)
+data(DictionaryGI)
+# Analyze sentiment
+sentiment1 <- analyzeSentiment(sub1$content,
+                              rules=list("SentimentGI"=list(ruleSentiment, loadDictionaryGI())))
+sentiment2 <- analyzeSentiment(sub2$content,
+                              rules=list("SentimentGI"=list(ruleSentiment, loadDictionaryGI())))
+sentiment3 <- analyzeSentiment(sub3$content,
+                              rules=list("SentimentGI"=list(ruleSentiment, loadDictionaryGI())))
+```
+
+# Combine results and then convert to Binary Response to see overall were the tweets as a whole positive or negative.
+```{r}
+# Combine
+sentiment_all <- rbind(sentiment1, sentiment2, sentiment3)
+
+# Count positive and negative tweets
+table(convertToBinaryResponse(sentiment_all$SentimentGI))
+```
+## Conclusions:
+As we can see there were mixed results based on the lexicon used to conduct the sentiment analysis. The analyses of each word using AFINN or Bing yielded mostly negative results, whereas nrc was a mix. Lastly, we can see directly above that analyzing the sentiment per tweet using the Harvard-IV dictionary showed there were just under twice as many positive tweets than negative. We can clearly see more analyses is needed to satisfactorily conclude one way or another and should exclude the word trump from the lexicons.
+
